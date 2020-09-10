@@ -33,7 +33,6 @@ class NCCreateFormUploadAssets: XLFormViewController, NCSelectDelegate {
     var serverUrl: String = ""
     var titleServerUrl: String?
     var assets = NSMutableArray()
-    var urls = NSMutableArray()
     var cryptated: Bool = false
     var session: String = ""
     weak var delegate: createFormUploadAssetsDelegate?
@@ -42,14 +41,14 @@ class NCCreateFormUploadAssets: XLFormViewController, NCSelectDelegate {
     let targetSizeImagePreview = CGSize(width:100, height: 100)
     let appDelegate = UIApplication.shared.delegate as! AppDelegate
     
-    @objc convenience init(serverUrl : String, assets : NSMutableArray, urls: NSMutableArray, cryptated : Bool, session : String, delegate: createFormUploadAssetsDelegate) {
+    @objc convenience init(serverUrl : String, assets : NSMutableArray, cryptated : Bool, session : String, delegate: createFormUploadAssetsDelegate) {
         
         self.init()
         
-        if serverUrl == CCUtility.getHomeServerUrlActiveUrl(appDelegate.activeUrl) {
+        if serverUrl == NCUtility.shared.getHomeServer(urlBase: appDelegate.urlBase, account: appDelegate.account) {
             titleServerUrl = "/"
         } else {
-            if let tableDirectory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account == %@ AND serverUrl == %@", appDelegate.activeAccount, serverUrl)) {
+            if let tableDirectory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account == %@ AND serverUrl == %@", appDelegate.account, serverUrl)) {
                 if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "ocId == %@", tableDirectory.ocId)) {
                     titleServerUrl = metadata.fileNameView
                 } else { titleServerUrl = (serverUrl as NSString).lastPathComponent }
@@ -58,7 +57,6 @@ class NCCreateFormUploadAssets: XLFormViewController, NCSelectDelegate {
         
         self.serverUrl = serverUrl
         self.assets = assets
-        self.urls = urls
         self.cryptated = cryptated
         self.session = session
         self.delegate = delegate
@@ -277,7 +275,7 @@ class NCCreateFormUploadAssets: XLFormViewController, NCSelectDelegate {
                     
                     self.reloadFormRow(formRow)
                     
-                    NCContentPresenter.shared.messageNotification("_info_", description: "_forbidden_characters_", delay: TimeInterval(k_dismissAfterSecond), type: NCContentPresenter.messageType.info, errorCode: 0)
+                    NCContentPresenter.shared.messageNotification("_info_", description: "_forbidden_characters_", delay: TimeInterval(k_dismissAfterSecond), type: NCContentPresenter.messageType.info, errorCode: Int(k_CCErrorCharactersForbidden), forced: true)
                 }
             }
             
@@ -308,10 +306,11 @@ class NCCreateFormUploadAssets: XLFormViewController, NCSelectDelegate {
             
             self.serverUrl = serverUrl!
             
-            if serverUrl == CCUtility.getHomeServerUrlActiveUrl(appDelegate.activeUrl) {
+            if serverUrl == NCUtility.shared.getHomeServer(urlBase: appDelegate.urlBase, account: appDelegate.account) {
                 self.titleServerUrl = "/"
             } else {
-                if let tableDirectory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account == %@ AND serverUrl == %@", appDelegate.activeAccount, self.serverUrl)) {
+                if let tableDirectory = NCManageDatabase.sharedInstance.getTableDirectory(predicate: NSPredicate(format: "account == %@ AND serverUrl == %@", appDelegate.account
+                    , self.serverUrl)) {
                     if let metadata = NCManageDatabase.sharedInstance.getMetadata(predicate: NSPredicate(format: "ocId == %@", tableDirectory.ocId)) {
                         titleServerUrl = metadata.fileNameView
                     } else { titleServerUrl = (self.serverUrl as NSString).lastPathComponent }
@@ -335,11 +334,11 @@ class NCCreateFormUploadAssets: XLFormViewController, NCSelectDelegate {
             
             if (useFolderPhotoRow.value! as AnyObject).boolValue == true {
                 
-                self.serverUrl = NCManageDatabase.sharedInstance.getAccountAutoUploadPath(self.appDelegate.activeUrl)
+                self.serverUrl = NCManageDatabase.sharedInstance.getAccountAutoUploadPath(urlBase: self.appDelegate.urlBase, account: self.appDelegate.account)
                 useSubFolder = (useSubFolderRow.value! as AnyObject).boolValue
             }
             
-            self.appDelegate.activeMain.uploadFileAsset(self.assets, urls: self.urls, serverUrl: self.serverUrl, useSubFolder: useSubFolder, session: self.session)
+            self.appDelegate.activeMain.uploadFileAsset(self.assets, serverUrl: self.serverUrl, useSubFolder: useSubFolder, session: self.session)
         })
     }
     

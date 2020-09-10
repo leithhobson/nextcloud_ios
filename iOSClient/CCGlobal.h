@@ -60,10 +60,6 @@
 // Server Status
 #define k_serverStatus                                  @"/status.php"
 
-// webDAV & DAV
-#define k_webDAV                                        @"/remote.php/webdav"
-#define k_dav                                           @"/remote.php/dav"
-
 // Login Flow
 #define k_flowEndpoint                                  @"/index.php/login/flow"
 
@@ -78,14 +74,12 @@
 
 #define k_daysOfActivity                                7
 
-#define k_maxErrorAutoUploadAll                         100
-
 #define k_sizePreview                                   1024
 #define k_sizeIcon                                      512
 
 // Database Realm
 #define k_databaseDefault                               @"nextcloud.realm"
-#define k_databaseSchemaVersion                         134
+#define k_databaseSchemaVersion                         141
 
 // Intro selector
 #define k_intro_login                                   0
@@ -158,13 +152,24 @@
 #define k_maxHTTPCache                                  10737418240 // 10GB
 
 // Error
-#define k_CCErrorInternalError                          -9999
+#define k_CCErrorInternalError                          -99999
+#define k_CCErrorFileNotSaved                           -99998
+#define k_CCErrorDecodeMetadata                         -99997
+#define k_CCErrorE2EENotEnabled                         -99996
+#define k_CCErrorE2EENotMove                            -99995
+#define k_CCErrorOffline                                -99994
+#define k_CCErrorCharactersForbidden                    -99993
+#define k_CCErrorCreationFile                           -99992
+
 
 // Search
 #define k_minCharsSearch                                2
 
 // Selector
-#define selectorDownloadSynchronize                     @"downloadSynchronize"
+#define selectorDownloadFile                            @"downloadFile"
+#define selectorDownloadAllFile                         @"downloadAllFile"
+#define selectorReadFile                                @"readFile"
+#define selectorListingFavorite                         @"listingFavorite"
 #define selectorLoadFileView                            @"loadFileView"
 #define selectorLoadFileViewFavorite                    @"loadFileViewFavorite"
 #define selectorLoadFileQuickLook                       @"loadFileQuickLook"
@@ -172,11 +177,7 @@
 #define selectorLoadOffline                             @"loadOffline"
 #define selectorOpenIn                                  @"openIn"
 #define selectorOpenInDetail                            @"openInDetail"
-#define selectorReadFile                                @"readFile"
-#define selectorReadFileWithDownload                    @"readFileWithDownload"
-#define selectorReadFolder                              @"readFolder"
-#define selectorReadFolderWithDownload                  @"readFolderWithDownload"
-#define selectorSave                                    @"save"
+#define selectorSaveAlbum                               @"saveAlbum"
 #define selectorUploadAutoUpload                        @"uploadAutoUpload"
 #define selectorUploadAutoUploadAll                     @"uploadAutoUploadAll"
 #define selectorUploadFile                              @"uploadFile"
@@ -233,6 +234,7 @@
 
 // E2EE
 #define k_max_filesize_E2EE                             524288000   // 500 MB
+#define k_E2EE_API                                      @"1.1"
 
 // Flow Version
 #define k_flow_version_available                        12
@@ -308,7 +310,6 @@
 #define k_notificationCenter_setTitleMain               @"setTitleMain"
 #define k_notificationCenter_changeTheming              @"changeTheming"
 #define k_notificationCenter_splitViewChangeDisplayMode @"splitViewChangeDisplayMode"
-#define k_notificationCenter_synchronizationMedia       @"synchronizationMedia"             // userInfo: metadata, type
 #define k_notificationCenter_changeUserProfile          @"changeUserProfile"
 #define k_notificationCenter_richdocumentGrabFocus      @"richdocumentGrabFocus"
 #define k_notificationCenter_reloadDataNCShare          @"reloadDataNCShare"

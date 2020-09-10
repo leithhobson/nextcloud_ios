@@ -46,13 +46,11 @@ GCC_WARN_UNUSED_VARIABLE = YES;
 SWIFT_COMPILATION_MODE = wholemodule;
 SWIFT_OPTIMIZATION_LEVEL = -Owholemodule;
 WARNING_CFLAGS = -Wmismatched-tags -Wunused-private-field -Wpartial-availability;
-OTHER_CFLAGS = -fvisibility-inlines-hidden $(REALM_CATALYST_FLAGS);
-OTHER_CFLAGS[arch=armv7] = -fvisibility-inlines-hidden -fno-aligned-new $(REALM_CATALYST_FLAGS);
-OTHER_LDFLAGS = $(REALM_CATALYST_FLAGS);
-OTHER_SWIFT_FLAGS = $(REALM_CATALYST_FLAGS);
+OTHER_CFLAGS = -fvisibility-inlines-hidden;
+OTHER_CFLAGS[arch=armv7] = -fvisibility-inlines-hidden -fno-aligned-new;
 
-OTHER_CPLUSPLUSFLAGS = $(inherited) -isystem core/include;
 HEADER_SEARCH_PATHS = $(inherited) Realm/ObjectStore/src;
+REALM_CORE_FRAMEWORK = core/realm-sync$(REALM_LIBRARY_SUFFIX).xcframework;
 
 CODE_SIGN_IDENTITY[sdk=iphone*] = iPhone Developer;
 CODE_SIGNING_REQUIRED[sdk=macosx] = NO;
@@ -62,7 +60,15 @@ IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 WATCHOS_DEPLOYMENT_TARGET = 2.0;
 TVOS_DEPLOYMENT_TARGET = 9.0;
 
-VALID_ARCHS[sdk=watchsimulator*] = i386;
+// Xcode 11 "helpfully" "corrects" arm64 to x86_64 when you try to exclude
+// arm64 on platforms that it doesn't support building for arm64 on.
+REALM_ARM_ARCHS_1200 = arm64 arm64e;
+REALM_ARM_ARCHS = $(REALM_ARM_ARCHS_$(XCODE_VERSION_MAJOR))
+
+EXCLUDED_ARCHS[sdk=macosx*] = $(REALM_ARM_ARCHS);
+EXCLUDED_ARCHS[sdk=watchsimulator*] = $(REALM_ARM_ARCHS);
+EXCLUDED_ARCHS[sdk=iphonesimulator*] = $(REALM_ARM_ARCHS);
+EXCLUDED_ARCHS[sdk=appletvsimulator*] = $(REALM_ARM_ARCHS);
 
 SWIFT_VERSION = 5.0;
 TARGETED_DEVICE_FAMILY = 1,2,3,4;

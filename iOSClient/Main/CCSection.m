@@ -76,7 +76,7 @@
 //
 // orderByField : nil, date, typeFile
 //
-+ (CCSectionDataSourceMetadata *)creataDataSourseSectionMetadata:(NSArray *)arrayMetadatas listProgressMetadata:(NSMutableDictionary *)listProgressMetadata groupByField:(NSString *)groupByField filterTypeFileImage:(BOOL)filterTypeFileImage filterTypeFileVideo:(BOOL)filterTypeFileVideo filterLivePhoto:(BOOL)filterLivePhoto sorted:(NSString *)sorted ascending:(BOOL)ascending activeAccount:(NSString *)activeAccount
++ (CCSectionDataSourceMetadata *)creataDataSourseSectionMetadata:(NSArray *)arrayMetadatas listProgressMetadata:(NSMutableDictionary *)listProgressMetadata groupByField:(NSString *)groupByField filterTypeFileImage:(BOOL)filterTypeFileImage filterTypeFileVideo:(BOOL)filterTypeFileVideo filterLivePhoto:(BOOL)filterLivePhoto sorted:(NSString *)sorted ascending:(BOOL)ascending account:(NSString *)account
 {
     id dataSection;
     
@@ -90,18 +90,9 @@
     */
     
     if ([CCUtility getLivePhoto] && filterLivePhoto) {
-        arraySoprtedMetadatas = [arrayMetadatas sortedArrayUsingComparator:^NSComparisonResult(tableMetadata *obj1, tableMetadata *obj2) {
-            return [obj1.fileName compare:obj2.fileName options:NSCaseInsensitiveSearch range:NSMakeRange(0,[obj1.fileName length]) locale:[NSLocale currentLocale]];
-        }];
-        NSString *prevFileNameImage;
-        for (tableMetadata *metadata in arraySoprtedMetadatas) {
-            if ([metadata.typeFile isEqualToString:k_metadataTypeFile_image]) {
-                prevFileNameImage = metadata.fileNameView.stringByDeletingPathExtension;
-            }
-            if ([metadata.typeFile isEqualToString:k_metadataTypeFile_video]) {
-                if ([metadata.fileNameView.stringByDeletingPathExtension isEqualToString:prevFileNameImage]) {
-                    [filterocId addObject:metadata.ocId];
-                }
+        for (tableMetadata *metadata in arrayMetadatas) {
+            if ([metadata.ext isEqualToString:@"mov"] && metadata.livePhoto) {
+                [filterocId addObject:metadata.ocId];
             }
         }
     }
@@ -122,8 +113,8 @@
             if (ascending) return (obj1.size < obj2.size);
             else return (obj1.size > obj2.size);
         } else {
-            if (ascending) return [obj1.fileName compare:obj2.fileName options:NSCaseInsensitiveSearch range:NSMakeRange(0,[obj1.fileName length]) locale:[NSLocale currentLocale]];
-            else return [obj2.fileName compare:obj1.fileName options:NSCaseInsensitiveSearch range:NSMakeRange(0,[obj2.fileName length]) locale:[NSLocale currentLocale]];
+            if (ascending) return [obj1.fileNameView compare:obj2.fileNameView options:NSCaseInsensitiveSearch range:NSMakeRange(0,[obj1.fileNameView length]) locale:[NSLocale currentLocale]];
+            else return [obj2.fileNameView compare:obj1.fileNameView options:NSCaseInsensitiveSearch range:NSMakeRange(0,[obj2.fileNameView length]) locale:[NSLocale currentLocale]];
         }
     }];
     
@@ -323,7 +314,7 @@
 
 @implementation CCSectionActivity
 
-+ (CCSectionDataSourceActivity *)creataDataSourseSectionActivity:(NSArray *)records activeAccount:(NSString *)activeAccount
++ (CCSectionDataSourceActivity *)creataDataSourseSectionActivity:(NSArray *)records account:(NSString *)account
 {
     CCSectionDataSourceActivity *sectionDataSource = [CCSectionDataSourceActivity new];
     NSDate *oldDate = [NSDate date];

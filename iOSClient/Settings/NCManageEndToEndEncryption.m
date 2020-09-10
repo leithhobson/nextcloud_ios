@@ -43,15 +43,21 @@
     XLFormSectionDescriptor *section;
     XLFormRowDescriptor *row;
     
-    BOOL isE2EEEnabled = [[NCManageDatabase sharedInstance] getCapabilitiesServerBoolWithAccount:appDelegate.activeAccount elements:NCElementsJSON.shared.capabilitiesE2EEEnabled exists:false];
-    // DISABLE E2EE
-    isE2EEEnabled = NO;
-    // DISABLE E2EE
-    if (isE2EEEnabled == NO) {
+    BOOL isE2EEEnabled = [[NCManageDatabase sharedInstance] getCapabilitiesServerBoolWithAccount:appDelegate.account elements:NCElementsJSON.shared.capabilitiesE2EEEnabled exists:false];
+    NSString *versionE2EE = [[NCManageDatabase sharedInstance] getCapabilitiesServerStringWithAccount:appDelegate.account elements:NCElementsJSON.shared.capabilitiesE2EEApiVersion];
+    
+    if (![versionE2EE isEqual:k_E2EE_API] && isE2EEEnabled) {
+        [[NCContentPresenter shared] messageNotification:@"_error_e2ee_" description:@"_err_e2ee_app_version_" delay:k_dismissAfterSecond type:messageTypeError errorCode:k_CCErrorInternalError forced:true];
+    }
+    
+    if (isE2EEEnabled == NO || ![versionE2EE isEqual:k_E2EE_API]) {
         
         // Section SERVICE NOT AVAILABLE -------------------------------------------------
         
         section = [XLFormSectionDescriptor formSection];
+        if (isE2EEEnabled) {
+            section.footerTitle = [NSString stringWithFormat:@"End-to-End Encryption %@", versionE2EE];
+        }
         [form addFormSection:section];
         
         row = [XLFormRowDescriptor formRowDescriptorWithTag:@"serviceActivated" rowType:XLFormRowDescriptorTypeInfo title:NSLocalizedString(@"_e2e_settings_not_available_", nil)];
@@ -68,11 +74,12 @@
         return;
     }
     
-    if ([CCUtility isEndToEndEnabled:appDelegate.activeAccount]) {
+    if ([CCUtility isEndToEndEnabled:appDelegate.account]) {
         
         // Section SERVICE ACTIVATED -------------------------------------------------
         
         section = [XLFormSectionDescriptor formSection];
+        section.footerTitle = [NSString stringWithFormat:@"End-to-End Encryption %@", versionE2EE];
         [form addFormSection:section];
         
         row = [XLFormRowDescriptor formRowDescriptorWithTag:@"serviceActivated" rowType:XLFormRowDescriptorTypeInfo title:NSLocalizedString(@"_e2e_settings_activated_", nil)];
@@ -329,7 +336,7 @@
         
     } else if ([passcodeType isEqualToString:@"readPassphrase"]) {
         
-        NSString *e2ePassphrase = [CCUtility getEndToEndPassphrase:appDelegate.activeAccount];
+        NSString *e2ePassphrase = [CCUtility getEndToEndPassphrase:appDelegate.account];
         NSLog(@"[LOG] Passphrase: %@", e2ePassphrase);
         
         NSString *message = [NSString stringWithFormat:@"\n%@\n\n\n%@", NSLocalizedString(@"_e2e_settings_the_passphrase_is_", nil), e2ePassphrase];
@@ -344,7 +351,7 @@
         UIAlertController *alertController = [UIAlertController alertControllerWithTitle:NSLocalizedString(@"_e2e_settings_remove_", nil) message:NSLocalizedString(@"_e2e_settings_remove_message_", nil) preferredStyle:UIAlertControllerStyleAlert];
         
         UIAlertAction *okAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"_remove_", nil) style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            [CCUtility clearAllKeysEndToEnd:appDelegate.activeAccount];
+            [CCUtility clearAllKeysEndToEnd:appDelegate.account];
             [self initializeForm];
         }];
         
@@ -362,10 +369,10 @@
     [self deselectFormRow:sender];
     
     [[NCCommunication shared] deleteE2EEPublicKeyWithCustomUserAgent:nil addCustomHeaders:nil completionHandler:^(NSString *account, NSInteger errorCode, NSString *errorDescription) {
-       if (errorCode == 0 && [account isEqualToString:appDelegate.activeAccount]) {
-            [[NCContentPresenter shared] messageNotification:@"E2E delete publicKey" description:@"Success" delay:k_dismissAfterSecond type:messageTypeSuccess errorCode:0];
+       if (errorCode == 0 && [account isEqualToString:appDelegate.account]) {
+            [[NCContentPresenter shared] messageNotification:@"E2E delete publicKey" description:@"Success" delay:k_dismissAfterSecond type:messageTypeSuccess errorCode:k_CCErrorInternalError forced:true];
         } else {
-            [[NCContentPresenter shared] messageNotification:@"E2E delete publicKey" description:errorDescription  delay:k_dismissAfterSecond type:messageTypeError errorCode:errorCode];
+            [[NCContentPresenter shared] messageNotification:@"E2E delete publicKey" description:errorDescription  delay:k_dismissAfterSecond type:messageTypeError errorCode:errorCode forced:true];
         }
     }];
 }
@@ -375,10 +382,10 @@
     [self deselectFormRow:sender];
     
     [[NCCommunication shared] deleteE2EEPrivateKeyWithCustomUserAgent:nil addCustomHeaders:nil completionHandler:^(NSString *account, NSInteger errorCode, NSString *errorDescription) {
-        if (errorCode == 0 && [account isEqualToString:appDelegate.activeAccount]) {
-            [[NCContentPresenter shared] messageNotification:@"E2E delete privateKey" description:@"Success" delay:k_dismissAfterSecond type:messageTypeSuccess errorCode:0];
+        if (errorCode == 0 && [account isEqualToString:appDelegate.account]) {
+            [[NCContentPresenter shared] messageNotification:@"E2E delete privateKey" description:@"Success" delay:k_dismissAfterSecond type:messageTypeSuccess errorCode:k_CCErrorInternalError forced:true];
         } else {
-            [[NCContentPresenter shared] messageNotification:@"E2E delete privateKey" description:errorDescription delay:k_dismissAfterSecond type:messageTypeError errorCode:errorCode];
+            [[NCContentPresenter shared] messageNotification:@"E2E delete privateKey" description:errorDescription delay:k_dismissAfterSecond type:messageTypeError errorCode:errorCode forced:true];
         }
     }];
 }

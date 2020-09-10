@@ -30,6 +30,7 @@
 @interface CCAdvanced ()
 {
     AppDelegate *appDelegate;
+    CCHud *_hud;
 }
 @end
 
@@ -126,6 +127,83 @@
         [section addFormRow:row];
     }
     
+    // Section DIAGNOSTICS -------------------------------------------------
+
+    section = [XLFormSectionDescriptor formSectionWithTitle:NSLocalizedString(@"_diagnostics_", nil)];
+    [form addFormSection:section];
+    
+    NSString *fileNameLog = [[NCCommunicationCommon shared] getFileNameLog];
+    
+    if ([[NSFileManager defaultManager] fileExistsAtPath:fileNameLog]) {
+        
+        row = [XLFormRowDescriptor formRowDescriptorWithTag:@"log" rowType:XLFormRowDescriptorTypeButton title:NSLocalizedString(@"_view_log_", nil)];
+        row.cellConfigAtConfigure[@"backgroundColor"] = NCBrandColor.sharedInstance.backgroundCell;
+        [row.cellConfig setObject:@(NSTextAlignmentLeft) forKey:@"textLabel.textAlignment"];
+        [row.cellConfig setObject:NCBrandColor.sharedInstance.textView forKey:@"textLabel.textColor"];
+        [row.cellConfig setObject:[UIFont systemFontOfSize:15.0] forKey:@"textLabel.font"];
+        [row.cellConfig setObject:[CCGraphics changeThemingColorImage:[UIImage imageNamed:@"log"] width:50 height:50 color:NCBrandColor.sharedInstance.icon] forKey:@"imageView.image"];
+        row.action.formBlock = ^(XLFormRowDescriptor * sender) {
+                    
+            [self deselectFormRow:sender];
+            
+            NCViewerQuickLook *viewerQuickLook = [NCViewerQuickLook new];
+            [viewerQuickLook quickLookWithUrl:[NSURL fileURLWithPath:fileNameLog] viewController:self];
+        };
+        [section addFormRow:row];
+        
+        row = [XLFormRowDescriptor formRowDescriptorWithTag:@"clearlog" rowType:XLFormRowDescriptorTypeButton title:NSLocalizedString(@"_clear_log_", nil)];
+        row.cellConfigAtConfigure[@"backgroundColor"] = NCBrandColor.sharedInstance.backgroundCell;
+        [row.cellConfig setObject:@(NSTextAlignmentLeft) forKey:@"textLabel.textAlignment"];
+        [row.cellConfig setObject:NCBrandColor.sharedInstance.textView forKey:@"textLabel.textColor"];
+        [row.cellConfig setObject:[UIFont systemFontOfSize:15.0] forKey:@"textLabel.font"];
+        [row.cellConfig setObject:[CCGraphics changeThemingColorImage:[UIImage imageNamed:@"clear"] width:50 height:50 color:NCBrandColor.sharedInstance.icon] forKey:@"imageView.image"];
+        row.action.formBlock = ^(XLFormRowDescriptor * sender) {
+                    
+            [self deselectFormRow:sender];
+
+            [[NCCommunicationCommon shared] clearFileLog];
+            
+            NSInteger logLevel = [CCUtility getLogLevel];
+            BOOL isSimulatorOrTestFlight = [[NCUtility shared] isSimulatorOrTestFlight];
+            NSString *versionApp = [NSString stringWithFormat:@"%@.%@", [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"], [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleVersion"]];
+            NSString *versionNextcloudiOS = [NSString stringWithFormat:[NCBrandOptions sharedInstance].textCopyrightNextcloudiOS, versionApp];
+            
+            if (isSimulatorOrTestFlight) {
+                [[NCCommunicationCommon shared] writeLog:[NSString stringWithFormat:@"[LOG] Clear log with level %lu %@ (Simulator / TestFlight)", (unsigned long)logLevel, versionNextcloudiOS]];
+            } else {
+                [[NCCommunicationCommon shared] writeLog:[NSString stringWithFormat:@"[LOG] Clear log with level %lu %@", (unsigned long)logLevel, versionNextcloudiOS]];
+            }
+        };
+        [section addFormRow:row];
+        
+        row = [XLFormRowDescriptor formRowDescriptorWithTag:@"logLevel" rowType:XLFormRowDescriptorTypeSlider title:NSLocalizedString(@"_level_log_", nil)];
+        row.cellConfigAtConfigure[@"backgroundColor"] = NCBrandColor.sharedInstance.backgroundCell;
+        [row.cellConfig setObject:@(NSTextAlignmentCenter) forKey:@"textLabel.textAlignment"];
+        [row.cellConfig setObject:NCBrandColor.sharedInstance.textView forKey:@"textLabel.textColor"];
+        [row.cellConfig setObject:[UIFont systemFontOfSize:15.0] forKey:@"textLabel.font"];
+        NSInteger logLevel = [CCUtility getLogLevel];
+        row.value = @(logLevel);
+        [row.cellConfigAtConfigure setObject:@(2) forKey:@"slider.maximumValue"];
+        [row.cellConfigAtConfigure setObject:@(0) forKey:@"slider.minimumValue"];
+        [row.cellConfigAtConfigure setObject:@(2) forKey:@"steps"];
+        [section addFormRow:row];
+    }
+    
+    row = [XLFormRowDescriptor formRowDescriptorWithTag:@"capabilities" rowType:XLFormRowDescriptorTypeButton title:NSLocalizedString(@"_capabilities_", nil)];
+    row.cellConfigAtConfigure[@"backgroundColor"] = NCBrandColor.sharedInstance.backgroundCell;
+    [row.cellConfig setObject:@(NSTextAlignmentLeft) forKey:@"textLabel.textAlignment"];
+    [row.cellConfig setObject:NCBrandColor.sharedInstance.textView forKey:@"textLabel.textColor"];
+    [row.cellConfig setObject:[UIFont systemFontOfSize:15.0] forKey:@"textLabel.font"];
+    [row.cellConfig setObject:[CCGraphics changeThemingColorImage:[UIImage imageNamed:@"capabilities"] width:50 height:50 color:NCBrandColor.sharedInstance.icon] forKey:@"imageView.image"];
+    row.action.formBlock = ^(XLFormRowDescriptor * sender) {
+                
+        [self deselectFormRow:sender];
+        
+        NCCapabilitiesViewController *capabilities = [[UIStoryboard storyboardWithName:@"NCCapabilitiesViewController" bundle:nil] instantiateInitialViewController];        
+        [self presentViewController:capabilities animated:YES completion:nil];
+    };
+    [section addFormRow:row];
+
     // Section CLEAR CACHE -------------------------------------------------
     
     section = [XLFormSectionDescriptor formSection];
@@ -168,7 +246,8 @@
         
     self.title = NSLocalizedString(@"_advanced_", nil);
     appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-    
+    _hud = [[CCHud alloc] initWithView:[[[UIApplication sharedApplication] delegate] window]];
+
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(changeTheming) name:k_notificationCenter_changeTheming object:nil];
     [self changeTheming];
 }
@@ -220,6 +299,13 @@
         [alertController addAction:okAction];
         [self presentViewController:alertController animated:YES completion:nil];
     }
+    
+    if ([rowDescriptor.tag isEqualToString:@"logLevel"]) {
+        
+        NSInteger logLevel = [[rowDescriptor.value valueData] intValue];
+        [CCUtility setLogLevel:logLevel];
+        [[NCCommunicationCommon shared] setFileLogWithLevel:logLevel echo:true];
+    }
 }
 
 #pragma --------------------------------------------------------------------------------------------
@@ -237,7 +323,7 @@
     [[NSURLCache sharedURLCache] setDiskCapacity:0];
     [KTVHTTPCache cacheDeleteAllCaches];
     
-    [[NCManageDatabase sharedInstance] clearDatabaseWithAccount:appDelegate.activeAccount removeAccount:false];
+    [[NCManageDatabase sharedInstance] clearDatabaseWithAccount:appDelegate.account removeAccount:false];
     
     [CCUtility removeGroupDirectoryProviderStorage];
     [CCUtility removeGroupLibraryDirectory];
@@ -253,6 +339,13 @@
 
     // Inizialized home
     [[NSNotificationCenter defaultCenter] postNotificationOnMainThreadName:k_notificationCenter_initializeMain object:nil userInfo:nil];
+    
+    // Clear Media
+    [appDelegate.activeMedia reloadDataSource];
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void) {
+       [_hud hideHud];
+    });
 }
 
 - (void)clearCacheRequest:(XLFormRowDescriptor *)sender
@@ -261,11 +354,12 @@
     
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"" message:NSLocalizedString(@"_want_delete_cache_", nil) preferredStyle:UIAlertControllerStyleActionSheet];
     
-    [alertController addAction: [UIAlertAction actionWithTitle:NSLocalizedString(@"_yes_", nil)
-                                                         style:UIAlertActionStyleDefault
-                                                       handler:^(UIAlertAction *action) {
-                                                           [self clearCache];
-                                                       }]];
+    [alertController addAction: [UIAlertAction actionWithTitle:NSLocalizedString(@"_yes_", nil) style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [_hud visibleHudTitle:NSLocalizedString(@"_wait_", nil) mode:MBProgressHUDModeIndeterminate color:nil];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1 * NSEC_PER_SEC), dispatch_get_main_queue(), ^(void) {
+            [self clearCache];
+        });
+    }]];
     
     [alertController addAction: [UIAlertAction actionWithTitle:NSLocalizedString(@"_cancel_", nil) style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
     }]];

@@ -148,7 +148,7 @@ extension NCCreateFormUploadConflictDelegate {
             }
             
             switchAlreadyExistingFiles.isOn = true
-            NCContentPresenter.shared.messageNotification("_info_", description: "_file_not_rewite_doc_", delay: TimeInterval(k_dismissAfterSecond), type: NCContentPresenter.messageType.info, errorCode: 0)
+            NCContentPresenter.shared.messageNotification("_info_", description: "_file_not_rewite_doc_", delay: TimeInterval(k_dismissAfterSecond), type: NCContentPresenter.messageType.info, errorCode: Int(k_CCErrorInternalError), forced: true)
         }
         
         tableView.reloadData()
@@ -170,7 +170,7 @@ extension NCCreateFormUploadConflictDelegate {
             
                 let fileNameMOV = (metadata.fileNameView as NSString).deletingPathExtension + ".mov"
                 
-                let newFileName = NCUtility.sharedInstance.createFileName(metadata.fileNameView, serverUrl: metadata.serverUrl, account: metadata.account)
+                let newFileName = NCUtility.shared.createFileName(metadata.fileNameView, serverUrl: metadata.serverUrl, account: metadata.account)
                 metadata.ocId = UUID().uuidString
                 metadata.fileName = newFileName
                 metadata.fileNameView = newFileName
@@ -275,13 +275,13 @@ extension NCCreateFormUploadConflict: UITableViewDataSource {
 
             // -----> Already Existing File
             
-            guard let metadataAlreadyExists = NCUtility.sharedInstance.getMetadataConflict(account: metadataNewFile.account, serverUrl: metadataNewFile.serverUrl, fileName: metadataNewFile.fileNameView) else { return UITableViewCell() }
+            guard let metadataAlreadyExists = NCUtility.shared.getMetadataConflict(account: metadataNewFile.account, serverUrl: metadataNewFile.serverUrl, fileName: metadataNewFile.fileNameView) else { return UITableViewCell() }
             if FileManager().fileExists(atPath: CCUtility.getDirectoryProviderStorageIconOcId(metadataAlreadyExists.ocId, etag: metadataAlreadyExists.etag)) {
                 cell.imageAlreadyExistingFile.image =  UIImage(contentsOfFile: CCUtility.getDirectoryProviderStorageIconOcId(metadataAlreadyExists.ocId, etag: metadataAlreadyExists.etag))
             } else if FileManager().fileExists(atPath: CCUtility.getDirectoryProviderStorageOcId(metadataAlreadyExists.ocId, fileNameView: metadataAlreadyExists.fileNameView)) && metadataAlreadyExists.contentType == "application/pdf" {
             
                 let url = URL(fileURLWithPath: CCUtility.getDirectoryProviderStorageOcId(metadataAlreadyExists.ocId, fileNameView: metadataAlreadyExists.fileNameView))
-                if let image = NCUtility.sharedInstance.pdfThumbnail(url: url) {
+                if let image = NCUtility.shared.pdfThumbnail(url: url) {
                     cell.imageAlreadyExistingFile.image = image
                 } else {
                     cell.imageAlreadyExistingFile.image = UIImage.init(named: metadataAlreadyExists.iconName)
