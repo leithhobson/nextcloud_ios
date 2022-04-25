@@ -33,19 +33,22 @@ class NCIntroViewController: UIViewController, UICollectionViewDataSource, UICol
     @IBOutlet weak var introCollectionView: UICollectionView!
     @IBOutlet weak var pageControl: UIPageControl!
 
-    @objc var delegate: NCIntroViewController?
+    @objc weak var delegate: NCIntroViewController?
+    private let appDelegate = UIApplication.shared.delegate as! AppDelegate
     private let titles = [NSLocalizedString("_intro_1_title_", comment: ""), NSLocalizedString("_intro_2_title_", comment: ""), NSLocalizedString("_intro_3_title_", comment: ""), NSLocalizedString("_intro_4_title_", comment: "")]
     private let images = [UIImage(named: "intro1"), UIImage(named: "intro2"), UIImage(named: "intro3"), UIImage(named: "intro4")]
     private var timerAutoScroll: Timer?
     private var textColor: UIColor = .white
     private var textColorOpponent: UIColor = .black
-    
+
+    // MARK: - View Life Cycle
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        let isTooLight = NCBrandColor.sharedInstance.customer.isTooLight()
-        let isTooDark = NCBrandColor.sharedInstance.customer.isTooDark()
-        
+
+        let isTooLight = NCBrandColor.shared.customer.isTooLight()
+        let isTooDark = NCBrandColor.shared.customer.isTooDark()
+
         if isTooLight {
             textColor = .black
             textColorOpponent = .white
@@ -56,49 +59,52 @@ class NCIntroViewController: UIViewController, UICollectionViewDataSource, UICol
             textColor = .white
             textColorOpponent = .black
         }
-        
+
         if #available(iOS 13.0, *) {
             let navBarAppearance = UINavigationBarAppearance()
             navBarAppearance.configureWithTransparentBackground()
             navBarAppearance.shadowColor = .clear
             navBarAppearance.shadowImage = UIImage()
             self.navigationController?.navigationBar.standardAppearance = navBarAppearance
+            self.navigationController?.view.backgroundColor = NCBrandColor.shared.customer
         } else {
             self.navigationController?.navigationBar.isTranslucent = true
             self.navigationController?.navigationBar.shadowImage = UIImage()
             self.navigationController?.navigationBar.setBackgroundImage(UIImage(), for: .default)
             self.navigationController?.navigationBar.backgroundColor = .clear
-            self.navigationController?.navigationBar.barTintColor = NCBrandColor.sharedInstance.customer
+            self.navigationController?.navigationBar.barTintColor = NCBrandColor.shared.customer
         }
         self.navigationController?.navigationBar.tintColor = textColor
 
-        
-        self.pageControl.currentPageIndicatorTintColor = textColor
-        self.pageControl.pageIndicatorTintColor = NCBrandColor.sharedInstance.nextcloudSoft
+        pageControl.currentPageIndicatorTintColor = textColor
+        pageControl.pageIndicatorTintColor = .lightGray
 
-        self.buttonLogin.layer.cornerRadius = 20
-        self.buttonLogin.setTitleColor(textColorOpponent, for: .normal)
-        self.buttonLogin.backgroundColor = textColor
-        self.buttonLogin.setTitle(NSLocalizedString("_log_in_", comment: ""), for: .normal)
+        buttonLogin.layer.cornerRadius = 20
+        buttonLogin.setTitleColor(NCBrandColor.shared.customer, for: .normal)
+        buttonLogin.backgroundColor = textColor
+        buttonLogin.setTitle(NSLocalizedString("_log_in_", comment: ""), for: .normal)
 
-        self.buttonSignUp.layer.cornerRadius = 20
-        self.buttonSignUp.setTitleColor(.white, for: .normal)
-        self.buttonSignUp.backgroundColor = UIColor(red: 25.0 / 255.0, green: 89.0 / 255.0, blue: 141.0 / 255.0, alpha: 1)
-        self.buttonSignUp.setTitle(NSLocalizedString("_sign_up_", comment: ""), for: .normal)
+        buttonSignUp.layer.cornerRadius = 20
+        buttonSignUp.layer.borderColor = textColor.cgColor
+        buttonSignUp.layer.borderWidth = 1.0
+        buttonSignUp.setTitleColor(textColor, for: .normal)
+        buttonSignUp.backgroundColor = NCBrandColor.shared.customer
+        buttonSignUp.setTitle(NSLocalizedString("_sign_up_", comment: ""), for: .normal)
 
-        self.buttonHost.layer.cornerRadius = 20
-        self.buttonHost.setTitle(NSLocalizedString("_host_your_own_server", comment: ""), for: .normal)
-        self.buttonHost.setTitleColor(textColor.withAlphaComponent(0.5), for: .normal)
+        buttonHost.layer.cornerRadius = 20
+        buttonHost.setTitle(NSLocalizedString("_host_your_own_server", comment: ""), for: .normal)
+        buttonHost.setTitleColor(textColor.withAlphaComponent(0.5), for: .normal)
 
-        self.introCollectionView.register(UINib(nibName: "NCIntroCollectionViewCell", bundle: nil), forCellWithReuseIdentifier: "introCell")
-        self.introCollectionView.dataSource = self
-        self.introCollectionView.delegate = self
-        self.introCollectionView.backgroundColor = NCBrandColor.sharedInstance.customer
-        self.pageControl.numberOfPages = self.titles.count
-        self.view.backgroundColor = NCBrandColor.sharedInstance.customer
-        self.timerAutoScroll = Timer.scheduledTimer(timeInterval: 5, target: self, selector: (#selector(NCIntroViewController.autoScroll)), userInfo: nil, repeats: true)
+        introCollectionView.register(UINib(nibName: "NCIntroCollectionViewCell", bundle: nil), forCellWithReuseIdentifier: "introCell")
+        introCollectionView.dataSource = self
+        introCollectionView.delegate = self
+        introCollectionView.backgroundColor = NCBrandColor.shared.customer
+        pageControl.numberOfPages = self.titles.count
+
+        view.backgroundColor = NCBrandColor.shared.customer
+        timerAutoScroll = Timer.scheduledTimer(timeInterval: 5, target: self, selector: (#selector(NCIntroViewController.autoScroll)), userInfo: nil, repeats: true)
     }
-    
+
     override var preferredStatusBarStyle: UIStatusBarStyle {
         if #available(iOS 13.0, *) {
             if traitCollection.userInterfaceStyle == .light {
@@ -122,10 +128,9 @@ class NCIntroViewController: UIViewController, UICollectionViewDataSource, UICol
     }
 
     @objc func autoScroll() {
-        if(pageControl.currentPage + 1 >= titles.count) {
+        if pageControl.currentPage + 1 >= titles.count {
             pageControl.currentPage = 0
-        }
-        else {
+        } else {
             pageControl.currentPage += 1
         }
         introCollectionView.scrollToItem(at: IndexPath(row: pageControl.currentPage, section: 0), at: .centeredHorizontally, animated: true)
@@ -141,7 +146,7 @@ class NCIntroViewController: UIViewController, UICollectionViewDataSource, UICol
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "introCell", for: indexPath) as! NCIntroCollectionViewCell
-        cell.backgroundColor = NCBrandColor.sharedInstance.customer
+        cell.backgroundColor = NCBrandColor.shared.customer
 
         cell.titleLabel.textColor = textColor
         cell.titleLabel.text = titles[indexPath.row]
@@ -163,25 +168,19 @@ class NCIntroViewController: UIViewController, UICollectionViewDataSource, UICol
     }
 
     @IBAction func login(_ sender: Any) {
-        (UIApplication.shared.delegate as! AppDelegate).openLoginView(navigationController, selector: Int(k_intro_login), openLoginWeb: false)
+        appDelegate.openLogin(viewController: navigationController, selector: NCGlobal.shared.introLogin, openLoginWeb: false)
     }
 
     @IBAction func signup(_ sender: Any) {
-        (UIApplication.shared.delegate as! AppDelegate).openLoginView(navigationController, selector: Int(k_intro_signup), openLoginWeb: false)
+        appDelegate.openLogin(viewController: navigationController, selector: NCGlobal.shared.introSignup, openLoginWeb: false)
     }
 
     @IBAction func host(_ sender: Any) {
-        let appDelegate = UIApplication.shared.delegate as? AppDelegate
-
-        let browserWebVC = UIStoryboard(name: "NCBrowserWeb", bundle: nil).instantiateInitialViewController() as? NCBrowserWeb
-
-        browserWebVC?.urlBase = NCBrandOptions.sharedInstance.linkLoginHost
-
-        if let browserWebVC = browserWebVC {
-            appDelegate?.window.rootViewController?.present(browserWebVC, animated: true)
-        }
+        guard let url = URL(string: NCBrandOptions.shared.linkLoginHost) else { return }
+        UIApplication.shared.open(url)
     }
 }
+
 extension UINavigationController {
     open override var childForStatusBarStyle: UIViewController? {
         return topViewController?.childForStatusBarStyle ?? topViewController

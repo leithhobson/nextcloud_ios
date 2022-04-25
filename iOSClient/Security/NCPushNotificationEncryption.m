@@ -33,14 +33,14 @@
 
 @implementation NCPushNotificationEncryption
 
-+ (NCPushNotificationEncryption *)sharedInstance
++ (NCPushNotificationEncryption *)shared
 {
     static dispatch_once_t once;
-    static NCPushNotificationEncryption *sharedInstance;
+    static NCPushNotificationEncryption *shared;
     dispatch_once(&once, ^{
-        sharedInstance = [[self alloc] init];
+        shared = [[self alloc] init];
     });
-    return sharedInstance;
+    return shared;
 }
 
 - (id)init
@@ -98,6 +98,8 @@
 
 - (NSString *)decryptPushNotification:(NSString *)message withDevicePrivateKey:(NSData *)privateKey
 {
+    if (message == nil || privateKey == nil) { return nil; }
+    
     NSString *privateKeyString = [[NSString alloc] initWithData:privateKey encoding:NSUTF8StringEncoding];
     NSData *decodedData = [[NSData alloc] initWithBase64EncodedString:message options:0];
     char *privKey = (char *)[privateKeyString UTF8String];

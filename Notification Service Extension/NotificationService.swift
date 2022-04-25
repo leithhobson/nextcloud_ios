@@ -19,6 +19,7 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+import UIKit
 import UserNotifications
 
 class NotificationService: UNNotificationServiceExtension {
@@ -29,18 +30,18 @@ class NotificationService: UNNotificationServiceExtension {
     override func didReceive(_ request: UNNotificationRequest, withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void) {
         self.contentHandler = contentHandler
         bestAttemptContent = (request.content.mutableCopy() as? UNMutableNotificationContent)
-        
+
         if let bestAttemptContent = bestAttemptContent {
             bestAttemptContent.title = ""
             bestAttemptContent.body = "Nextcloud notification"
             do {
                 let message = bestAttemptContent.userInfo["subject"] as! String
-                let tableAccounts = NCManageDatabase.sharedInstance.getAllAccount()
+                let tableAccounts = NCManageDatabase.shared.getAllAccount()
                 for tableAccount in tableAccounts {
                     guard let privateKey = CCUtility.getPushNotificationPrivateKey(tableAccount.account) else {
                         continue
                     }
-                    guard let decryptedMessage = NCPushNotificationEncryption.sharedInstance().decryptPushNotification(message, withDevicePrivateKey: privateKey) else {
+                    guard let decryptedMessage = NCPushNotificationEncryption.shared().decryptPushNotification(message, withDevicePrivateKey: privateKey) else {
                         continue
                     }
                     guard let data = decryptedMessage.data(using: .utf8) else {
@@ -54,11 +55,11 @@ class NotificationService: UNNotificationServiceExtension {
             } catch let error as NSError {
                 print("Failed : \(error.localizedDescription)")
             }
-            
+
             contentHandler(bestAttemptContent)
         }
     }
-    
+
     override func serviceExtensionTimeWillExpire() {
         // Called just before the extension will be terminated by the system.
         // Use this as an opportunity to deliver your "best attempt" at modified content, otherwise the original push payload will be used.

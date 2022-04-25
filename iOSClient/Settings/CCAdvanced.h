@@ -22,11 +22,8 @@
 //
 
 #import <MessageUI/MFMailComposeViewController.h>
-#import <XLForm/XLForm.h>
-#import "CCHud.h"
+#import <XLForm.h>
 
 @interface CCAdvanced : XLFormViewController <MFMailComposeViewControllerDelegate>
-
-@property (nonatomic, strong) CCHud *hud;
 
 @end

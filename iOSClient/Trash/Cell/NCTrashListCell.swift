@@ -4,7 +4,9 @@
 //
 //  Created by Marino Faggiana on 08/10/2018.
 //  Copyright © 2018 Marino Faggiana. All rights reserved.
+//  Copyright © 2022 Henrik Storch. All rights reserved.
 //
+//  Author Henrik Storch <henrik.storch@nextcloud.com>
 //  Author Marino Faggiana <marino.faggiana@nextcloud.com>
 //
 //  This program is free software: you can redistribute it and/or modify
@@ -21,50 +23,114 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-import Foundation
 import UIKit
 
-class NCTrashListCell: UICollectionViewCell {
-    
+class NCTrashListCell: UICollectionViewCell, NCTrashCell {
+
     @IBOutlet weak var imageItem: UIImageView!
     @IBOutlet weak var imageItemLeftConstraint: NSLayoutConstraint!
     @IBOutlet weak var imageSelect: UIImageView!
 
     @IBOutlet weak var labelTitle: UILabel!
-    @IBOutlet weak var labelInfo: UILabel!
-    
+    @IBOutlet weak var labelInfo: UILabel?
+
     @IBOutlet weak var imageRestore: UIImageView!
     @IBOutlet weak var imageMore: UIImageView!
 
     @IBOutlet weak var buttonMore: UIButton!
     @IBOutlet weak var buttonRestore: UIButton!
-    
-    @IBOutlet weak var separator: UIView!
 
-    var delegate: NCTrashListCellDelegate?
-    
+    @IBOutlet weak var separator: UIView!
+    @IBOutlet weak var separatorHeightConstraint: NSLayoutConstraint!
+
+    weak var delegate: NCTrashListCellDelegate?
+
     var objectId = ""
-    var indexPath = IndexPath()
 
     override func awakeFromNib() {
         super.awakeFromNib()
-       
-        imageRestore.image = CCGraphics.changeThemingColorImage(UIImage.init(named: "restore"), multiplier: 2, color: NCBrandColor.sharedInstance.optionItem)
-        imageMore.image = CCGraphics.changeThemingColorImage(UIImage.init(named: "more"), multiplier: 2, color: NCBrandColor.sharedInstance.optionItem)
-        
-        separator.backgroundColor = NCBrandColor.sharedInstance.separator
+
+        imageRestore.image = NCBrandColor.cacheImages.buttonRestore
+        imageMore.image = NCUtility.shared.loadImage(named: "trash")
+
+        imageItem.layer.cornerRadius = 6
+        imageItem.layer.masksToBounds = true
+
+        separator.backgroundColor = NCBrandColor.shared.separator
+        separatorHeightConstraint.constant = 0.5
     }
-    
+
     @IBAction func touchUpInsideMore(_ sender: Any) {
-        delegate?.tapMoreListItem(with: objectId, sender: sender)
+        delegate?.tapMoreListItem(with: objectId, image: imageItem.image, sender: sender)
     }
-    
+
     @IBAction func touchUpInsideRestore(_ sender: Any) {
-        delegate?.tapRestoreListItem(with: objectId, sender: sender)
+        delegate?.tapRestoreListItem(with: objectId, image: imageItem.image, sender: sender)
+    }
+
+    func selectMode(_ status: Bool) {
+        if status {
+            imageItemLeftConstraint.constant = 45
+            imageSelect.isHidden = false
+        } else {
+            imageItemLeftConstraint.constant = 10
+            imageSelect.isHidden = true
+            backgroundView = nil
+        }
+    }
+
+    func selected(_ status: Bool) {
+        if status {
+            var blurEffect: UIVisualEffect?
+            var blurEffectView: UIView?
+            imageSelect.image = NCBrandColor.cacheImages.checkedYes
+            if traitCollection.userInterfaceStyle == .dark {
+                blurEffect = UIBlurEffect(style: .dark)
+                blurEffectView = UIVisualEffectView(effect: blurEffect)
+                blurEffectView?.backgroundColor = .black
+            } else {
+                blurEffect = UIBlurEffect(style: .extraLight)
+                blurEffectView = UIVisualEffectView(effect: blurEffect)
+                blurEffectView?.backgroundColor = .lightGray
+            }
+            blurEffectView?.frame = self.bounds
+            blurEffectView?.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            backgroundView = blurEffectView
+            separator.isHidden = true
+        } else {
+            imageSelect.image = NCBrandColor.cacheImages.checkedNo
+            backgroundView = nil
+            separator.isHidden = false
+        }
     }
 }
 
-protocol NCTrashListCellDelegate {
-    func tapRestoreListItem(with objectId: String, sender: Any)
-    func tapMoreListItem(with objectId: String, sender: Any)
+protocol NCTrashListCellDelegate: AnyObject {
+    func tapRestoreListItem(with objectId: String, image: UIImage?, sender: Any)
+    func tapMoreListItem(with objectId: String, image: UIImage?, sender: Any)
+}
+
+protocol NCTrashCell {
+    var objectId: String { get set }
+    var labelTitle: UILabel! { get set }
+    var labelInfo: UILabel? { get set }
+    var imageItem: UIImageView! { get set }
+
+    func selectMode(_ status: Bool)
+    func selected(_ status: Bool)
+}
+extension NCTrashCell {
+    mutating func setupCellUI(tableTrash: tableTrash, image: UIImage?) {
+        self.objectId = tableTrash.fileId
+        self.labelTitle.text = tableTrash.trashbinFileName
+        self.labelTitle.textColor = NCBrandColor.shared.label
+
+        if tableTrash.directory {
+            self.imageItem.image = NCBrandColor.cacheImages.folder
+            self.labelInfo?.text = CCUtility.dateDiff(tableTrash.date as Date)
+        } else {
+            self.imageItem.image = image
+            self.labelInfo?.text = CCUtility.dateDiff(tableTrash.date as Date) + ", " + CCUtility.transformedSize(tableTrash.size)
+        }
+    }
 }

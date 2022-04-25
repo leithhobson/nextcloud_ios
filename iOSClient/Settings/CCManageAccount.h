@@ -21,11 +21,8 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#import <XLForm/XLForm.h>
-#import "CCLogin.h"
+#import <XLForm.h>
 
 @interface CCManageAccount : XLFormViewController
-
-- (void)deleteAccount:(NSString *)account;
 
 @end
